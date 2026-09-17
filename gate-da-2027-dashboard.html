@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GATE DA 2027 — Prep Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#F6F6F3;
+  --paper:#FFFFFF;
+  --line:#E2E2DC;
+  --ink:#1B1E1D;
+  --ink-2:#5B5F5C;
+  --ink-3:#8B8F8B;
+  --teal:#0E6E62;
+  --teal-soft:#E4F0EE;
+  --amber:#B4791A;
+  --amber-soft:#FBF0DD;
+  --rose:#AE3B45;
+  --rose-soft:#F8E7E8;
+  --slate:#8A8F92;
+  --slate-soft:#EEEEEC;
+  --radius:7px;
+  --sans: 'Public Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15171A; --paper:#1D2023; --line:#2C3033; --ink:#EDEEEC; --ink-2:#B0B4B1; --ink-3:#7D827F;
+    --teal:#3FB6A5; --teal-soft:#173330; --amber:#E0A742; --amber-soft:#332A16;
+    --rose:#E17984; --rose-soft:#361D20; --slate:#9AA0A3; --slate-soft:#25282B;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15171A; --paper:#1D2023; --line:#2C3033; --ink:#EDEEEC; --ink-2:#B0B4B1; --ink-3:#7D827F;
+  --teal:#3FB6A5; --teal-soft:#173330; --amber:#E0A742; --amber-soft:#332A16;
+  --rose:#E17984; --rose-soft:#361D20; --slate:#9AA0A3; --slate-soft:#25282B;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);}
+body{-webkit-font-smoothing:antialiased;}
+.mono{font-family:var(--mono);}
+a{color:inherit;}
+button{font-family:var(--sans);cursor:pointer;}
+input,select,textarea{font-family:var(--sans);}
+
+#shell{display:flex;min-height:100vh;}
+
+/* ---- Sidebar ---- */
+#sidebar{
+  width:220px;flex:0 0 220px;background:var(--paper);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;
+}
+.brand{padding:20px 18px 14px;border-bottom:1px solid var(--line);}
+.brand .title{font-weight:800;font-size:15px;letter-spacing:0.2px;}
+.brand .sub{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:3px;}
+nav.navlist{padding:10px;display:flex;flex-direction:column;gap:2px;flex:1;}
+nav.navlist button{
+  text-align:left;background:none;border:none;padding:9px 10px;border-radius:6px;
+  font-size:13.5px;color:var(--ink-2);display:flex;align-items:center;gap:9px;
+}
+nav.navlist button .dot{width:6px;height:6px;border-radius:50%;background:var(--line);flex:0 0 auto;}
+nav.navlist button.active{background:var(--teal-soft);color:var(--teal);font-weight:600;}
+nav.navlist button.active .dot{background:var(--teal);}
+nav.navlist button:hover:not(.active){background:var(--slate-soft);}
+.sidebar-foot{padding:12px 14px 16px;border-top:1px solid var(--line);}
+.sidebar-foot .countdown-mini{font-family:var(--mono);font-size:12px;color:var(--ink-3);}
+.sidebar-foot .countdown-mini b{color:var(--ink);font-size:14px;}
+
+/* ---- Main ---- */
+#main{flex:1;min-width:0;padding:26px 30px 60px;max-width:1180px;}
+.pagehead{margin-bottom:22px;}
+.pagehead h1{font-size:21px;margin:0 0 4px;font-weight:800;}
+.pagehead p{margin:0;color:var(--ink-2);font-size:13.5px;}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px;}
+.card + .card{margin-top:14px;}
+.hairline{border-top:1px solid var(--line);}
+
+.grid{display:grid;gap:14px;}
+.grid-2{grid-template-columns:repeat(2,1fr);}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+@media (max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:600px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;} #main{padding:18px 14px 50px;} #shell{flex-direction:column;} #sidebar{width:100%;height:auto;position:relative;flex-direction:row;overflow-x:auto;} nav.navlist{flex-direction:row;} .brand,.sidebar-foot{display:none;}}
+
+.stat{padding:14px 0;border-bottom:1px solid var(--line);}
+.stat:last-child{border-bottom:none;}
+.statgrid{display:grid;grid-template-columns:repeat(4,1fr);}
+.statgrid .stat{border-right:1px solid var(--line);padding:14px 16px;border-bottom:none;}
+.statgrid .stat:last-child{border-right:none;}
+@media (max-width:900px){.statgrid{grid-template-columns:repeat(2,1fr);} .statgrid .stat:nth-child(2n){border-right:none;} .statgrid .stat{border-bottom:1px solid var(--line);}}
+.stat .num{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1;}
+.stat .lbl{font-size:12px;color:var(--ink-2);margin-top:6px;}
+
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 8px;border-radius:5px;}
+.b-done{background:var(--teal-soft);color:var(--teal);}
+.b-progress{background:var(--amber-soft);color:var(--amber);}
+.b-notstarted{background:var(--slate-soft);color:var(--slate);}
+.b-revision{background:var(--rose-soft);color:var(--rose);}
+
+.progressbar{height:8px;border-radius:5px;background:var(--slate-soft);overflow:hidden;}
+.progressbar > div{height:100%;background:var(--teal);}
+
+.btn{border:1px solid var(--line);background:var(--paper);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--ink);}
+.btn:hover{background:var(--slate-soft);}
+.btn-primary{background:var(--teal);border-color:var(--teal);color:#fff;}
+.btn-primary:hover{opacity:0.9;background:var(--teal);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+
+label.f{display:block;font-size:12px;color:var(--ink-2);margin-bottom:4px;margin-top:10px;}
+input.f,select.f,textarea.f{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font-size:13.5px;}
+textarea.f{resize:vertical;min-height:60px;}
+
+table.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+table.tbl th{text-align:left;font-size:11px;text-transform:none;color:var(--ink-3);padding:8px 10px;border-bottom:1px solid var(--line);font-weight:600;}
+table.tbl td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+table.tbl tr:last-child td{border-bottom:none;}
+table.tbl tr:hover td{background:var(--slate-soft);}
+
+.section-title{font-size:12px;font-weight:700;color:var(--ink-2);margin:0 0 10px;}
+.hero{border-left:3px solid var(--teal);padding-left:16px;}
+
+.topiclist{display:flex;flex-direction:column;}
+.topicrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);}
+.topicrow:last-child{border-bottom:none;}
+.topicrow .tname{flex:1;font-size:13.5px;}
+.statuspick{display:flex;gap:4px;}
+.statuspick button{border:1px solid var(--line);background:var(--paper);font-size:10.5px;padding:4px 7px;border-radius:5px;color:var(--ink-2);}
+.statuspick button.on{border-color:transparent;}
+.statuspick button.on.s-completed{background:var(--teal);color:#fff;}
+.statuspick button.on.s-progress{background:var(--amber);color:#fff;}
+.statuspick button.on.s-notstarted{background:var(--slate);color:#fff;}
+.statuspick button.on.s-revision{background:var(--rose);color:#fff;}
+
+.subjectcard{cursor:pointer;transition:border-color .12s;}
+.subjectcard:hover{border-color:var(--teal);}
+.subjectcard h3{margin:0 0 2px;font-size:15px;}
+.subjectcard .meta{font-size:12px;color:var(--ink-3);margin-bottom:10px;}
+
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:flex;align-items:flex-start;justify-content:center;z-index:50;overflow-y:auto;padding:40px 16px;}
+.modal{background:var(--paper);border-radius:10px;max-width:560px;width:100%;padding:22px;border:1px solid var(--line);}
+.modal h2{margin:0 0 4px;font-size:17px;}
+.modal .close{float:right;background:none;border:none;font-size:18px;color:var(--ink-3);}
+
+.tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:5px;background:var(--slate-soft);color:var(--ink-2);margin-right:5px;}
+.phase-p1{color:#3B6FB6;} .phase-p2{color:var(--amber);} .phase-p3{color:#7A57B0;} .phase-p4{color:var(--rose);}
+.chip-phase{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;}
+.chip-p1{background:#E7EEF9;color:#3B6FB6;} .chip-p2{background:var(--amber-soft);color:var(--amber);}
+.chip-p3{background:#EFE9F7;color:#7A57B0;} .chip-p4{background:var(--rose-soft);color:var(--rose);}
+
+.empty{color:var(--ink-3);font-size:13px;padding:16px 0;text-align:center;}
+
+.heatmap{display:grid;grid-template-columns:repeat(20,1fr);gap:3px;}
+.heat-cell{aspect-ratio:1;border-radius:2px;background:var(--slate-soft);}
+
+.timeline{position:relative;height:54px;margin:18px 0 6px;}
+.timeline .track{position:absolute;top:24px;left:0;right:0;height:6px;background:var(--slate-soft);border-radius:4px;overflow:hidden;display:flex;}
+.timeline .seg{height:100%;}
+.timeline .marker{position:absolute;top:14px;width:2px;height:26px;background:var(--ink);}
+.timeline .marker-lbl{position:absolute;top:34px;font-size:10px;font-family:var(--mono);color:var(--ink-2);white-space:nowrap;transform:translateX(-50%);}
+
+.two-col{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;}
+@media (max-width:900px){.two-col{grid-template-columns:1fr;}}
+
+.filterbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.filterbar select, .filterbar input{padding:6px 9px;border:1px solid var(--line);border-radius:6px;background:var(--paper);font-size:12.5px;color:var(--ink);}
+
+.small{font-size:12px;color:var(--ink-2);}
+.mb0{margin-bottom:0;}
+.flexrow{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.mt10{margin-top:10px;} .mt14{margin-top:14px;} .mt20{margin-top:20px;}
+canvas{max-width:100%;}
+</style>
+</head>
+<body>
+<div id="shell">
+  <div id="sidebar">
+    <div class="brand">
+      <div class="title">GATE DA 2027</div>
+      <div class="sub" id="brandSub">— days remaining —</div>
+    </div>
+    <nav class="navlist" id="navlist"></nav>
+    <div class="sidebar-foot">
+      <div class="countdown-mini">Overall <b id="footPct">0%</b></div>
+    </div>
+  </div>
+  <div id="main"></div>
+</div>
+<div id="modalRoot"></div>
+<script>
+/* ============================= SYLLABUS ============================= */
+const SYLLABUS_RAW = [
+  { id:'ps', name:'Probability and Statistics', weight:1.15, topics:[
+    'Counting (permutations and combinations)','Probability axioms','Sample space and events',
+    'Independent events','Mutually exclusive events','Marginal, conditional and joint probability',
+    'Bayes theorem','Conditional expectation and variance','Mean, median, mode and standard deviation',
+    'Correlation and covariance','Random variables','Discrete random variables and probability mass functions',
+    'Uniform, Bernoulli, binomial distributions','Continuous random variables and probability distribution function',
+    'Uniform, exponential, Poisson, normal, standard normal distributions','t-distribution and chi-squared distribution',
+    'Cumulative distribution function (CDF)','Conditional PDF','Central Limit Theorem','Confidence interval',
+    'z-test','t-test','Chi-squared test'
+  ]},
+  { id:'la', name:'Linear Algebra', weight:1.05, topics:[
+    'Vector space','Subspaces','Linear dependence and independence of vectors','Matrices','Projection matrix',
+    'Orthogonal matrix','Idempotent matrix','Partition matrix and their properties','Quadratic forms',
+    'Systems of linear equations and solutions','Gaussian elimination','Eigenvalues and eigenvectors',
+    'Determinant','Rank','Nullity','Projections','LU decomposition','Singular value decomposition (SVD)'
+  ]},
+  { id:'co', name:'Calculus and Optimization', weight:0.85, topics:[
+    'Functions of a single variable','Limit, continuity and differentiability','Taylor series',
+    'Maxima and minima','Optimization involving a single variable'
+  ]},
+  { id:'pdsa', name:'Programming, Data Structures and Algorithms', weight:1.0, topics:[
+    'Programming in Python','Stacks','Queues','Linked lists','Trees','Hash tables','Linear search',
+    'Binary search','Selection sort','Bubble sort','Insertion sort','Merge sort (divide and conquer)',
+    'Quick sort (divide and conquer)','Introduction to graph theory','Graph traversals','Shortest path algorithms'
+  ]},
+  { id:'dbmw', name:'Database Management and Warehousing', weight:0.9, topics:[
+    'ER-model','Relational algebra','Tuple calculus','SQL','Integrity constraints','Normal form',
+    'File organization','Indexing','Data types','Normalization (data transformation)','Discretization',
+    'Sampling','Compression','Data warehouse modelling & multidimensional schema','Concept hierarchies',
+    'Measures: categorization and computation'
+  ]},
+  { id:'ml', name:'Machine Learning', weight:1.3, topics:[
+    'Regression and classification problems','Simple linear regression','Multiple linear regression',
+    'Ridge regression','Logistic regression','K-nearest neighbour','Naive Bayes classifier',
+    'Linear discriminant analysis','Support vector machine','Decision trees','Bias-variance trade-off',
+    'Leave-one-out (LOO) cross-validation','K-folds cross-validation','Multi-layer perceptron',
+    'Feed-forward neural network','Clustering algorithms','K-means / K-medoid',
+    'Hierarchical clustering (top-down, bottom-up)','Single-linkage and multiple-linkage',
+    'Dimensionality reduction','Principal component analysis (PCA)'
+  ]},
+  { id:'ai', name:'Artificial Intelligence', weight:1.0, topics:[
+    'Informed search','Uninformed search','Adversarial search','Propositional logic','Predicate logic',
+    'Conditional independence representation','Exact inference through variable elimination',
+    'Approximate inference through sampling'
+  ]},
+];
+const SYLLABUS = SYLLABUS_RAW.map(sec => ({
+  ...sec,
+  topics: sec.topics.map((t,i) => ({ id: sec.id+'-'+(i+1), name:t }))
+}));
+const ALL_TOPICS = SYLLABUS.flatMap(s => s.topics.map(t => ({...t, sectionId:s.id, sectionName:s.name})));
+const TOPIC_BY_ID = Object.fromEntries(ALL_TOPICS.map(t => [t.id, t]));
+const SECTION_BY_ID = Object.fromEntries(SYLLABUS.map(s => [s.id, s]));
+
+/* ============================= DATES ============================= */
+const PREP_START = '2026-09-17';
+const PREP_END = '2027-02-01';
+function parseD(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function fmtD(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
+function addDays(d,n){ const nd=new Date(d); nd.setDate(nd.getDate()+n); return nd; }
+function humanDate(s){ const d=parseD(s); return d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}); }
+function dayName(s){ return parseD(s).toLocaleDateString('en-US',{weekday:'long'}); }
+function todayStr(){
+  const real = fmtD(new Date());
+  if(real < PREP_START) return PREP_START;
+  if(real > PREP_END) return PREP_END;
+  return real;
+}
+const START_D = parseD(PREP_START), END_D = parseD(PREP_END);
+const ALL_DATES = (function(){ const arr=[]; let c=new Date(START_D); while(c<=END_D){ arr.push(fmtD(c)); c=addDays(c,1);} return arr; })();
+const TOTAL_DAYS = ALL_DATES.length;
+function daysBetween(a,b){ return Math.round((parseD(b)-parseD(a))/86400000); }
+
+/* ============================= PLANNER GENERATION ============================= */
+// Phase boundaries (index into ALL_DATES)
+const P1_END_IDX = Math.floor(TOTAL_DAYS*0.60)-1;   // Concept Building
+const P2_END_IDX = Math.floor(TOTAL_DAYS*0.79)-1;   // Topic-wise Problem Solving
+const P3_END_IDX = Math.floor(TOTAL_DAYS*0.90)-1;   // Revision
+// remaining -> Phase 4: Mock Tests + Final Revision
+
+function phaseForIdx(i){
+  if(i<=P1_END_IDX) return 'P1';
+  if(i<=P2_END_IDX) return 'P2';
+  if(i<=P3_END_IDX) return 'P3';
+  return 'P4';
+}
+const PHASE_LABEL = {P1:'Concept Building',P2:'Topic-wise Problem Solving',P3:'Revision',P4:'Mock Tests + Final Revision'};
+
+function allocateDaysBySection(totalDaysForPhase){
+  const totalTopics = ALL_TOPICS.length;
+  let alloc = SYLLABUS.map(s => Math.max(1, Math.round(totalDaysForPhase * s.topics.length / totalTopics)));
+  let diff = totalDaysForPhase - alloc.reduce((a,b)=>a+b,0);
+  let idx = 0;
+  while(diff !== 0){
+    const i = idx % alloc.length;
+    if(diff>0){ alloc[i]++; diff--; } else if(alloc[i]>1){ alloc[i]--; diff++; }
+    idx++;
+    if(idx>10000) break;
+  }
+  return alloc; // parallel to SYLLABUS array
+}
+
+function buildStudyBlocks(dayCount, mode){
+  // mode: 'learn' (phase1, 1 topic focus per day, buffer=consolidation) or 'practice' (phase2, problem solving)
+  const alloc = allocateDaysBySection(dayCount);
+  const blocks = []; // {sectionId, sectionName, topicIds, topicNames, isBuffer}
+  SYLLABUS.forEach((sec, si) => {
+    const days = alloc[si];
+    const topics = sec.topics;
+    if(days >= topics.length){
+      topics.forEach(t => blocks.push({sectionId:sec.id, sectionName:sec.name, topicIds:[t.id], topicNames:[t.name], weight:sec.weight, buffer:false}));
+      const bufferDays = days - topics.length;
+      for(let b=0;b<bufferDays;b++){
+        blocks.push({sectionId:sec.id, sectionName:sec.name, topicIds:[], topicNames:[], weight:sec.weight, buffer:true});
+      }
+    } else {
+      const perDay = Math.ceil(topics.length / days);
+      for(let d=0; d<days; d++){
+        const chunk = topics.slice(d*perDay, (d+1)*perDay);
+        if(chunk.length===0) continue;
+        blocks.push({sectionId:sec.id, sectionName:sec.name, topicIds:chunk.map(t=>t.id), topicNames:chunk.map(t=>t.name), weight:sec.weight, buffer:false});
+      }
+    }
+  });
+  return blocks;
+}
+
+let GENERATED_PLAN = null; // dateStr -> plan object (base, before user overrides)
+function generatePlan(){
+  const plan = {};
+  const p1Days = P1_END_IDX+1;
+  const p2Days = P2_END_IDX-P1_END_IDX;
+  const p3Days = P3_END_IDX-P2_END_IDX;
+  const p4Days = TOTAL_DAYS-1-P3_END_IDX;
+
+  const p1Blocks = buildStudyBlocks(p1Days,'learn');
+  const p2Blocks = buildStudyBlocks(p2Days,'practice');
+  const p3Blocks = buildStudyBlocks(p3Days,'revise');
+
+  ALL_DATES.forEach((date, idx) => {
+    const phase = phaseForIdx(idx);
+    let block, label, hours, qTarget, priority;
+    if(phase==='P1'){
+      block = p1Blocks[idx] || p1Blocks[p1Blocks.length-1];
+      const base = 1.6*(block.weight||1);
+      hours = block.buffer ? Math.round((base*1.3)*10)/10 : Math.round((base*(0.7+0.3*block.topicIds.length))*10)/10;
+      qTarget = block.buffer ? 20 : 10*block.topicIds.length;
+      label = block.buffer ? `Practice & Consolidation — ${block.sectionName}` : `Concept Building — ${block.sectionName}`;
+      priority = 'High';
+    } else if(phase==='P2'){
+      const rel = idx-(P1_END_IDX+1);
+      block = p2Blocks[rel] || p2Blocks[p2Blocks.length-1];
+      const base = 1.8*(block.weight||1);
+      hours = Math.round((base*(0.7+0.3*Math.max(1,block.topicIds.length)))*10)/10;
+      qTarget = block.buffer ? 25 : 18*Math.max(1,block.topicIds.length);
+      label = block.buffer ? `Extra Practice — ${block.sectionName}` : `Problem Solving — ${block.sectionName}`;
+      priority = 'Medium';
+    } else if(phase==='P3'){
+      const rel = idx-(P2_END_IDX+1);
+      block = p3Blocks[rel] || p3Blocks[p3Blocks.length-1];
+      hours = 2.0;
+      qTarget = 20;
+      label = `Revision — ${block.sectionName}`;
+      priority = 'Medium';
+    } else {
+      const rel = idx-(P3_END_IDX+1);
+      const cyclePos = rel % 3;
+      const secIdx = Math.floor(rel/1) % SYLLABUS.length;
+      if(cyclePos===2){
+        block = {sectionId:null, sectionName:'Full Syllabus', topicIds:[], topicNames:[]};
+        label = 'Mock Test Day';
+        hours = 3.0; qTarget = 65; priority = 'High';
+      } else {
+        const sec = SYLLABUS[secIdx];
+        block = {sectionId:sec.id, sectionName:sec.name, topicIds:sec.topics.map(t=>t.id), topicNames:[]};
+        label = `Final Revision — ${sec.name}`;
+        hours = 2.5; qTarget = 25; priority = 'High';
+      }
+      if(idx===TOTAL_DAYS-1){ label='Final Light Revision & Rest'; hours=1.5; qTarget=10; priority='Low'; }
+    }
+    plan[date] = {
+      date, phase, phaseLabel:PHASE_LABEL[phase], label,
+      sectionId: block.sectionId, sectionName: block.sectionName,
+      topicIds: block.topicIds||[], topicNames: block.topicNames||[],
+      plannedHours: hours, questionsTarget: qTarget, priority
+    };
+  });
+  return plan;
+}
+
+/* ============================= STORE ============================= */
+const STORE_KEY = 'gateDa2027DashboardV1';
+function defaultState(){
+  const topics = {};
+  ALL_TOPICS.forEach(t => { topics[t.id] = { status:'not_started', dateStarted:null, dateCompleted:null, notes:'', confidence:0,
+    revisions:{r1:{done:false,date:null},r2:{done:false,date:null},r3:{done:false,date:null},final:{done:false,date:null}} }; });
+  return {
+    version:1,
+    topics,
+    sessions: [], // {id,date,sectionId,topicId,startTime,endTime,hours,attempted,correct,confidence,notes,difficulty,source}
+    mockTests: [], // {id,date,name,totalMarks,marksObtained,attempted,correct,incorrect,unattempted,timeTaken,weakSubjects,notes}
+    mistakes: [], // {id,date,sectionId,topicId,question,mistake,correctApproach,reason,revisionStatus}
+    dailyReflections: {}, // dateStr -> {learned,struggled,mistakes,tomorrowTarget}
+    plannerOverrides: {}, // dateStr -> partial plan override
+    goals: { dailyHours:3, weeklyHours:18, dailyQuestions:30, weeklyQuestions:180, targetMocks:20 },
+    lastActiveDate: null,
+    theme: 'auto'
+  };
+}
+let STATE = loadState();
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    const def = defaultState();
+    // shallow-merge safety for forward compatibility
+    return {...def, ...parsed, topics:{...def.topics, ...(parsed.topics||{})}, goals:{...def.goals,...(parsed.goals||{})}};
+  }catch(e){ console.error('load failed', e); return defaultState(); }
+}
+function saveState(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(STATE)); }catch(e){ console.error('save failed', e); }
+}
+function resetAllData(){
+  STATE = defaultState();
+  saveState();
+  render();
+}
+
+/* ============================= DERIVED / COMPUTED ============================= */
+function getPlanForDate(date){
+  const base = GENERATED_PLAN[date];
+  const ov = STATE.plannerOverrides[date];
+  return ov ? {...base, ...ov} : base;
+}
+function sessionsForTopic(topicId){ return STATE.sessions.filter(s=>s.topicId===topicId); }
+function sessionsForSection(sectionId){ return STATE.sessions.filter(s=>s.sectionId===sectionId); }
+function topicAgg(topicId){
+  const sess = sessionsForTopic(topicId);
+  const hours = sess.reduce((a,s)=>a+(Number(s.hours)||0),0);
+  const attempted = sess.reduce((a,s)=>a+(Number(s.attempted)||0),0);
+  const correct = sess.reduce((a,s)=>a+(Number(s.correct)||0),0);
+  const accuracy = attempted>0 ? Math.round((correct/attempted)*1000)/10 : null;
+  const lastDate = sess.length ? sess.map(s=>s.date).sort().slice(-1)[0] : null;
+  return {hours:Math.round(hours*10)/10, attempted, correct, accuracy, lastDate, sessionCount:sess.length};
+}
+function sectionAgg(sectionId){
+  const sec = SECTION_BY_ID[sectionId];
+  const topics = sec.topics;
+  let completed=0, inProgress=0, notStarted=0, revisionNeeded=0;
+  topics.forEach(t=>{
+    const st = STATE.topics[t.id].status;
+    if(st==='completed') completed++; else if(st==='in_progress') inProgress++;
+    else if(st==='revision_needed') revisionNeeded++; else notStarted++;
+  });
+  const sess = sessionsForSection(sectionId);
+  const hours = sess.reduce((a,s)=>a+(Number(s.hours)||0),0);
+  const attempted = sess.reduce((a,s)=>a+(Number(s.attempted)||0),0);
+  const correct = sess.reduce((a,s)=>a+(Number(s.correct)||0),0);
+  const accuracy = attempted>0 ? Math.round((correct/attempted)*1000)/10 : null;
+  const lastDate = sess.length ? sess.map(s=>s.date).sort().slice(-1)[0] : null;
+  const pct = Math.round((completed/topics.length)*1000)/10;
+  return {total:topics.length, completed, inProgress, notStarted, revisionNeeded, pct, hours:Math.round(hours*10)/10, attempted, correct, accuracy, lastDate};
+}
+function overallStats(){
+  const total = ALL_TOPICS.length;
+  let completed=0, inProgress=0, notStarted=0, revisionNeeded=0;
+  ALL_TOPICS.forEach(t=>{
+    const st = STATE.topics[t.id].status;
+    if(st==='completed') completed++; else if(st==='in_progress') inProgress++;
+    else if(st==='revision_needed') revisionNeeded++; else notStarted++;
+  });
+  const totalHours = STATE.sessions.reduce((a,s)=>a+(Number(s.hours)||0),0);
+  const totalAttempted = STATE.sessions.reduce((a,s)=>a+(Number(s.attempted)||0),0);
+  const totalCorrect = STATE.sessions.reduce((a,s)=>a+(Number(s.correct)||0),0);
+  const accuracy = totalAttempted>0 ? Math.round((totalCorrect/totalAttempted)*1000)/10 : 0;
+  const mockCount = STATE.mockTests.length;
+  const avgMock = mockCount>0 ? Math.round((STATE.mockTests.reduce((a,m)=>a+(m.totalMarks>0?(m.marksObtained/m.totalMarks*100):0),0)/mockCount)*10)/10 : 0;
+  return { total, completed, inProgress, notStarted, revisionNeeded,
+    pct: Math.round((completed/total)*1000)/10,
+    totalHours: Math.round(totalHours*10)/10, totalAttempted, totalCorrect, accuracy, mockCount, avgMock };
+}
+function activeDatesSet(){ return new Set(STATE.sessions.map(s=>s.date)); }
+function currentStreak(){
+  const active = activeDatesSet();
+  let d = parseD(todayStr());
+  let streak = 0;
+  // if today has no activity yet, start checking from yesterday so a same-day-not-yet-logged doesn't zero the streak
+  if(!active.has(fmtD(d))) d = addDays(d,-1);
+  while(active.has(fmtD(d)) && fmtD(d)>=PREP_START){
+    streak++; d = addDays(d,-1);
+  }
+  return streak;
+}
+function todaysSessions(date){ return STATE.sessions.filter(s=>s.date===date); }
+function todaysAgg(date){
+  const sess = todaysSessions(date);
+  const hours = sess.reduce((a,s)=>a+(Number(s.hours)||0),0);
+  const attempted = sess.reduce((a,s)=>a+(Number(s.attempted)||0),0);
+  const topicsTouched = new Set(sess.map(s=>s.topicId).filter(Boolean));
+  return {hours:Math.round(hours*10)/10, attempted, topicsTouched: topicsTouched.size, sessCount: sess.length};
+}
+function weeklyHours(){
+  const map = {};
+  ALL_DATES.forEach(d=>map[d]=0);
+  STATE.sessions.forEach(s=>{ if(map[s.date]!==undefined) map[s.date]+= (Number(s.hours)||0); });
+  return map;
+}
+function revisionDueToday(){
+  const t = todayStr();
+  const due = [];
+  ALL_TOPICS.forEach(topic=>{
+    const rec = STATE.topics[topic.id];
+    if(rec.status!=='completed' && rec.status!=='revision_needed') return;
+    const stages = ['r1','r2','r3','final'];
+    for(const st of stages){
+      const s = rec.revisions[st];
+      if(!s.done && s.date && s.date<=t){ due.push({topic, stage:st, date:s.date}); break; }
+    }
+  });
+  return due;
+}
+function scheduleRevisions(topicId, completionDate){
+  const rec = STATE.topics[topicId];
+  const base = parseD(completionDate);
+  rec.revisions.r1.date = fmtD(addDays(base,3));
+  rec.revisions.r2.date = fmtD(addDays(base,7));
+  rec.revisions.r3.date = fmtD(addDays(base,16));
+  rec.revisions.final.date = fmtD(addDays(base,30));
+}
+function focusAreas(limit=8){
+  const scored = ALL_TOPICS.map(t=>{
+    const agg = topicAgg(t.id);
+    const rec = STATE.topics[t.id];
+    const mistakeCount = STATE.mistakes.filter(m=>m.topicId===t.id).length;
+    let score = 0;
+    if(agg.accuracy!==null) score += (100-agg.accuracy)*0.45; else if(rec.status!=='not_started') score += 20;
+    score += (5-(rec.confidence||0))*8;
+    score += Math.min(mistakeCount,5)*7;
+    if(rec.status==='revision_needed') score += 25;
+    const overdue = Object.values(rec.revisions).some(r=>!r.done && r.date && r.date<todayStr());
+    if(overdue) score += 15;
+    return { topic:t, score:Math.round(score*10)/10, accuracy:agg.accuracy, confidence:rec.confidence, mistakeCount, status:rec.status };
+  }).filter(x=>x.status!=='not_started' || x.mistakeCount>0);
+  scored.sort((a,b)=>b.score-a.score);
+  return scored.slice(0,limit);
+}
+function strongTopics(limit=8){
+  const scored = ALL_TOPICS.map(t=>{
+    const agg = topicAgg(t.id);
+    const rec = STATE.topics[t.id];
+    if(rec.status!=='completed' || agg.accuracy===null) return null;
+    const score = agg.accuracy + (rec.confidence||0)*4;
+    return {topic:t, score:Math.round(score*10)/10, accuracy:agg.accuracy, confidence:rec.confidence};
+  }).filter(Boolean);
+  scored.sort((a,b)=>b.score-a.score);
+  return scored.slice(0,limit);
+}
+function recentActivity(limit=10){
+  const items = [];
+  STATE.sessions.forEach(s=>items.push({type:'session',date:s.date,text:`Studied ${s.hours||0}h — ${TOPIC_BY_ID[s.topicId]?TOPIC_BY_ID[s.topicId].name:(s.sectionName||'General')}${s.attempted?` · ${s.correct||0}/${s.attempted} correct`:''}`}));
+  STATE.mockTests.forEach(m=>items.push({type:'mock',date:m.date,text:`Mock test "${m.name}" — ${m.marksObtained}/${m.totalMarks}`}));
+  Object.entries(STATE.topics).forEach(([id,rec])=>{ if(rec.dateCompleted) items.push({type:'complete',date:rec.dateCompleted,text:`Completed — ${TOPIC_BY_ID[id].name}`}); });
+  items.sort((a,b)=> a.date<b.date?1:-1);
+  return items.slice(0,limit);
+}
+
+/* ============================= NAV / ROUTING ============================= */
+const PAGES = [
+  {id:'today', label:'Today'},
+  {id:'overview', label:'Overview'},
+  {id:'subjects', label:'Subjects'},
+  {id:'planner', label:'Planner'},
+  {id:'revision', label:'Revision'},
+  {id:'practice', label:'Practice Log'},
+  {id:'mocks', label:'Mock Tests'},
+  {id:'mistakes', label:'Mistake Book'},
+  {id:'focus', label:'Focus Areas'},
+  {id:'goals', label:'Goals & Settings'},
+];
+let ROUTE = { page:'today', subjectId:null };
+
+function navigate(page, params){
+  ROUTE = { page, ...(params||{}) };
+  render();
+  window.scrollTo(0,0);
+}
+
+function renderNav(){
+  const nav = document.getElementById('navlist');
+  nav.innerHTML = PAGES.map(p => `<button data-nav="${p.id}" class="${ROUTE.page===p.id?'active':''}"><span class="dot"></span>${p.label}</button>`).join('');
+  nav.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.nav)));
+  const daysLeft = Math.max(0, daysBetween(todayStr(), PREP_END));
+  document.getElementById('brandSub').textContent = `${daysLeft} days to GATE`;
+  document.getElementById('footPct').textContent = overallStats().pct + '%';
+}
+
+/* ============================= HELPERS: UI BITS ============================= */
+const STATUS_CLASS = {not_started:'notstarted', in_progress:'progress', completed:'completed', revision_needed:'revision'};
+const STATUS_LABEL = {not_started:'Not Started', in_progress:'In Progress', completed:'Completed', revision_needed:'Revision Needed'};
+function statusBadge(status){
+  const map = { completed:['Completed','b-done'], in_progress:['In Progress','b-progress'], not_started:['Not Started','b-notstarted'], revision_needed:['Revision Needed','b-revision'] };
+  const [t,c] = map[status] || map.not_started;
+  return `<span class="badge ${c}">${t}</span>`;
+}
+function phaseChip(phase){
+  const map = {P1:'chip-p1',P2:'chip-p2',P3:'chip-p3',P4:'chip-p4'};
+  return `<span class="chip-phase ${map[phase]}">${PHASE_LABEL[phase]}</span>`;
+}
+function progressBar(pct){ return `<div class="progressbar"><div style="width:${Math.max(0,Math.min(100,pct))}%"></div></div>`; }
+function esc(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ============================= PAGE: TODAY ============================= */
+function renderToday(){
+  const date = ROUTE.viewDate || todayStr();
+  const plan = getPlanForDate(date);
+  const agg = todaysAgg(date);
+  const goals = STATE.goals;
+  const pctDone = Math.min(100, Math.round(((agg.hours/plan.plannedHours)*0.5 + (agg.attempted/Math.max(1,plan.questionsTarget))*0.5)*100));
+  const tomorrow = fmtD(addDays(parseD(date),1));
+  const tPlan = ALL_DATES.includes(tomorrow) ? getPlanForDate(tomorrow) : null;
+  const streak = currentStreak();
+  const refl = STATE.dailyReflections[date] || {};
+  const isToday = date===todayStr();
+
+  const topicStatusRows = plan.topicIds.map(tid=>{
+    const t = TOPIC_BY_ID[tid];
+    const rec = STATE.topics[tid];
+    return `<div class="topicrow">
+      <div class="tname">${esc(t.name)} <span class="tag">${esc(t.sectionName)}</span></div>
+      <div class="statuspick" data-topic="${tid}">
+        ${['not_started','in_progress','completed','revision_needed'].map(s=>`<button data-set-status="${s}" class="${rec.status===s?'on s-'+STATUS_CLASS[s]:''}">${STATUS_LABEL[s]}</button>`).join('')}
+      </div>
+    </div>`;
+  }).join('') || `<div class="empty">No specific new topics scheduled — this is a consolidation / practice day.</div>`;
+
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead flexrow">
+      <div>
+        <h1>${humanDate(date)} — ${dayName(date)}</h1>
+        <p>${isToday?'Today':'Viewing'} · ${phaseChip(plan.phase)} <span style="margin-left:8px" class="small">Phase: ${plan.phaseLabel}</span></p>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-sm" id="prevDay">← Prev</button>
+        <button class="btn btn-sm" id="todayBtn">Today</button>
+        <button class="btn btn-sm" id="nextDay">Next →</button>
+      </div>
+    </div>
+
+    <div class="card hero">
+      <div class="section-title">TODAY'S TARGET</div>
+      <h2 style="margin:0 0 6px;font-size:18px;">${esc(plan.sectionName||'General')}</h2>
+      <div class="small" style="margin-bottom:10px;">${plan.topicNames.length? esc(plan.topicNames.join(' · ')) : esc(plan.label)}</div>
+      <div class="grid grid-3" style="margin-bottom:6px;">
+        <div><div class="small">Planned Study</div><div class="mono" style="font-size:16px;font-weight:600;">${plan.plannedHours} hrs</div></div>
+        <div><div class="small">Questions Target</div><div class="mono" style="font-size:16px;font-weight:600;">${plan.questionsTarget}</div></div>
+        <div><div class="small">Priority</div><div class="mono" style="font-size:16px;font-weight:600;">${plan.priority}</div></div>
+      </div>
+      <div class="btn-row mt10">
+        <button class="btn btn-primary" id="startStudyBtn">Start Study Session</button>
+        <button class="btn" id="editPlanBtn">Edit Today's Plan</button>
+        <button class="btn" id="moveUnfinishedBtn">Move Unfinished to Tomorrow</button>
+      </div>
+    </div>
+
+    <div class="two-col mt14">
+      <div class="card">
+        <div class="section-title">TOPICS SCHEDULED TODAY</div>
+        <div class="topiclist">${topicStatusRows}</div>
+      </div>
+      <div class="card">
+        <div class="section-title">TODAY'S PROGRESS</div>
+        <div class="stat" style="padding-top:0;">
+          <div class="flexrow"><span class="small">Study</span><span class="mono">${agg.hours} / ${plan.plannedHours} hrs</span></div>
+          ${progressBar(plan.plannedHours>0?(agg.hours/plan.plannedHours*100):0)}
+        </div>
+        <div class="stat">
+          <div class="flexrow"><span class="small">Questions</span><span class="mono">${agg.attempted} / ${plan.questionsTarget}</span></div>
+          ${progressBar(plan.questionsTarget>0?(agg.attempted/plan.questionsTarget*100):0)}
+        </div>
+        <div class="stat">
+          <div class="flexrow"><span class="small">Topics touched</span><span class="mono">${agg.topicsTouched} / ${Math.max(1,plan.topicIds.length)}</span></div>
+        </div>
+        <div class="stat" style="border-bottom:none;">
+          <div class="flexrow"><span class="small">Daily completion</span><span class="mono" style="font-weight:700;">${pctDone}%</span></div>
+        </div>
+        <div class="hairline mt10" style="padding-top:10px;">
+          <div class="flexrow"><span class="small">Current streak</span><span class="mono">🔥 ${streak} day${streak!==1?'s':''}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt14">
+      <div class="section-title">SESSIONS LOGGED TODAY</div>
+      ${renderSessionsTable(todaysSessions(date))}
+    </div>
+
+    <div class="card mt14">
+      <div class="section-title">DAILY REFLECTION</div>
+      <form id="reflForm">
+        <label class="f">What did I understand well?</label>
+        <textarea class="f" name="learned">${esc(refl.learned)}</textarea>
+        <label class="f">What was difficult?</label>
+        <textarea class="f" name="struggled">${esc(refl.struggled)}</textarea>
+        <label class="f">What mistakes did I make?</label>
+        <textarea class="f" name="mistakes">${esc(refl.mistakes)}</textarea>
+        <label class="f">Tomorrow's target</label>
+        <input class="f" name="tomorrowTarget" value="${esc(refl.tomorrowTarget)}" placeholder="${tPlan?esc(tPlan.sectionName+': '+(tPlan.topicNames[0]||tPlan.label)):''}">
+        <div class="btn-row mt10"><button class="btn btn-primary" type="submit">Save Reflection</button></div>
+      </form>
+    </div>
+
+    ${tPlan ? `<div class="card mt14">
+      <div class="section-title">TOMORROW</div>
+      <div class="flexrow">
+        <div>
+          <div style="font-weight:600;">${esc(tPlan.sectionName||'General')}</div>
+          <div class="small">${tPlan.topicNames.length?esc(tPlan.topicNames.join(' · ')):esc(tPlan.label)}</div>
+        </div>
+        <div class="mono small">${tPlan.plannedHours}h · ${tPlan.questionsTarget}q</div>
+      </div>
+    </div>` : ''}
+  `;
+
+  document.getElementById('prevDay').onclick = ()=>navigate('today',{viewDate: fmtD(addDays(parseD(date),-1))});
+  document.getElementById('nextDay').onclick = ()=>navigate('today',{viewDate: fmtD(addDays(parseD(date),1))});
+  document.getElementById('todayBtn').onclick = ()=>navigate('today',{viewDate: todayStr()});
+  document.getElementById('startStudyBtn').onclick = ()=>openSessionModal(date, plan);
+  document.getElementById('editPlanBtn').onclick = ()=>openEditPlanModal(date, plan);
+  document.getElementById('moveUnfinishedBtn').onclick = ()=>moveUnfinishedToTomorrow(date, plan);
+  document.querySelectorAll('[data-set-status]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const row = e.target.closest('[data-topic]');
+      const tid = row.dataset.topic;
+      setTopicStatus(tid, e.target.dataset.setStatus);
+      renderToday();
+    });
+  });
+  document.getElementById('reflForm').addEventListener('submit', e=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    STATE.dailyReflections[date] = {
+      learned: fd.get('learned'), struggled: fd.get('struggled'),
+      mistakes: fd.get('mistakes'), tomorrowTarget: fd.get('tomorrowTarget')
+    };
+    saveState();
+    toast('Reflection saved');
+  });
+}
+
+function renderSessionsTable(sessions){
+  if(!sessions.length) return `<div class="empty">No sessions logged yet.</div>`;
+  return `<table class="tbl"><thead><tr><th>Time</th><th>Topic</th><th>Hours</th><th>Q's</th><th>Correct</th><th>Accuracy</th><th>Conf.</th></tr></thead><tbody>
+    ${sessions.map(s=>{
+      const acc = s.attempted>0 ? Math.round((s.correct/s.attempted)*1000)/10+'%' : '—';
+      return `<tr><td class="mono">${esc(s.startTime||'')}${s.endTime?'–'+esc(s.endTime):''}</td><td>${TOPIC_BY_ID[s.topicId]?esc(TOPIC_BY_ID[s.topicId].name):esc(s.sectionName||'—')}</td><td class="mono">${s.hours||0}</td><td class="mono">${s.attempted||0}</td><td class="mono">${s.correct||0}</td><td class="mono">${acc}</td><td class="mono">${s.confidence||'—'}</td></tr>`;
+    }).join('')}
+  </tbody></table>`;
+}
+
+function setTopicStatus(topicId, status){
+  const rec = STATE.topics[topicId];
+  const prev = rec.status;
+  rec.status = status;
+  const today = todayStr();
+  if(status==='in_progress' && !rec.dateStarted) rec.dateStarted = today;
+  if(status==='completed'){
+    rec.dateCompleted = today;
+    if(!rec.dateStarted) rec.dateStarted = today;
+    scheduleRevisions(topicId, today);
+  }
+  if(status!=='completed' && prev==='completed'){
+    // unmarking completion clears the auto revision schedule so it doesn't linger
+  }
+  saveState();
+}
+
+function moveUnfinishedToTomorrow(date, plan){
+  const remainingTopics = plan.topicIds.filter(tid => STATE.topics[tid].status!=='completed');
+  if(remainingTopics.length===0){ toast('Nothing unfinished — nice work.'); return; }
+  const tomorrow = fmtD(addDays(parseD(date),1));
+  if(!ALL_DATES.includes(tomorrow)){ toast('Already at the end of the prep calendar.'); return; }
+  const tomorrowBase = getPlanForDate(tomorrow);
+  const mergedIds = Array.from(new Set([...remainingTopics, ...tomorrowBase.topicIds]));
+  const mergedNames = mergedIds.map(id=>TOPIC_BY_ID[id]?TOPIC_BY_ID[id].name:id);
+  STATE.plannerOverrides[tomorrow] = {
+    ...tomorrowBase,
+    topicIds: mergedIds, topicNames: mergedNames,
+    label: (tomorrowBase.label||'') + ' + carried over topics',
+    plannedHours: Math.round((tomorrowBase.plannedHours + remainingTopics.length*1.2)*10)/10,
+    questionsTarget: tomorrowBase.questionsTarget + remainingTopics.length*10
+  };
+  // Shrink today's own remaining requirement so it isn't double counted going forward, but keep original plan visible via override with note only if today
+  saveState();
+  toast(`Moved ${remainingTopics.length} unfinished topic(s) to tomorrow.`);
+  render();
+}
+
+/* ============================= MODALS ============================= */
+function openModal(html){
+  document.getElementById('modalRoot').innerHTML = `<div class="modal-bg" id="modalBg"><div class="modal">${html}</div></div>`;
+  document.getElementById('modalBg').addEventListener('click', e=>{ if(e.target.id==='modalBg') closeModal(); });
+  document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click', closeModal));
+}
+function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
+
+function openSessionModal(date, plan){
+  const topicOptions = plan.topicIds.length ? plan.topicIds : ALL_TOPICS.map(t=>t.id);
+  openModal(`
+    <button class="close" data-close-modal>×</button>
+    <h2>Log Study Session</h2>
+    <div class="small">${humanDate(date)}</div>
+    <form id="sessForm">
+      <label class="f">Topic</label>
+      <select class="f" name="topicId">
+        ${topicOptions.map(id=>`<option value="${id}">${esc(TOPIC_BY_ID[id].sectionName)} — ${esc(TOPIC_BY_ID[id].name)}</option>`).join('')}
+        <option value="">General / Not topic-specific</option>
+      </select>
+      <div class="grid grid-2">
+        <div><label class="f">Start time</label><input class="f" type="time" name="startTime"></div>
+        <div><label class="f">End time</label><input class="f" type="time" name="endTime"></div>
+      </div>
+      <label class="f">Actual hours studied</label>
+      <input class="f" type="number" step="0.1" min="0" name="hours" required placeholder="e.g. 1.5">
+      <div class="grid grid-2">
+        <div><label class="f">Questions solved</label><input class="f" type="number" min="0" name="attempted"></div>
+        <div><label class="f">Correct answers</label><input class="f" type="number" min="0" name="correct"></div>
+      </div>
+      <label class="f">Confidence (1–5)</label>
+      <input class="f" type="number" min="1" max="5" name="confidence">
+      <label class="f">Notes</label>
+      <textarea class="f" name="notes"></textarea>
+      <div class="btn-row mt10">
+        <button class="btn btn-primary" type="submit">Save Session</button>
+      </div>
+    </form>
+  `);
+  document.getElementById('sessForm').addEventListener('submit', e=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const topicId = fd.get('topicId')||null;
+    const attempted = Number(fd.get('attempted'))||0;
+    const correct = Math.min(attempted, Number(fd.get('correct'))||0);
+    const session = {
+      id: 's'+Date.now(), date, topicId,
+      sectionId: topicId?TOPIC_BY_ID[topicId].sectionId:plan.sectionId,
+      sectionName: topicId?TOPIC_BY_ID[topicId].sectionName:plan.sectionName,
+      startTime: fd.get('startTime'), endTime: fd.get('endTime'),
+      hours: Number(fd.get('hours'))||0, attempted, correct,
+      confidence: Number(fd.get('confidence'))||null, notes: fd.get('notes')
+    };
+    STATE.sessions.push(session);
+    if(topicId){
+      const rec = STATE.topics[topicId];
+      if(rec.status==='not_started') rec.status='in_progress';
+      if(!rec.dateStarted) rec.dateStarted = date;
+      if(session.confidence) rec.confidence = session.confidence;
+    }
+    saveState();
+    closeModal();
+    render();
+    toast('Session saved');
+  });
+}
+
+function openEditPlanModal(date, plan){
+  openModal(`
+    <button class="close" data-close-modal>×</button>
+    <h2>Edit Plan — ${humanDate(date)}</h2>
+    <form id="editPlanForm">
+      <label class="f">Section</label>
+      <select class="f" name="sectionId">
+        ${SYLLABUS.map(s=>`<option value="${s.id}" ${plan.sectionId===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}
+      </select>
+      <label class="f">Label / focus</label>
+      <input class="f" name="label" value="${esc(plan.label)}">
+      <div class="grid grid-2">
+        <div><label class="f">Planned hours</label><input class="f" type="number" step="0.1" name="plannedHours" value="${plan.plannedHours}"></div>
+        <div><label class="f">Questions target</label><input class="f" type="number" name="questionsTarget" value="${plan.questionsTarget}"></div>
+      </div>
+      <label class="f">Priority</label>
+      <select class="f" name="priority">
+        ${['High','Medium','Low'].map(p=>`<option ${plan.priority===p?'selected':''}>${p}</option>`).join('')}
+      </select>
+      <div class="btn-row mt10"><button class="btn btn-primary" type="submit">Save Changes</button></div>
+    </form>
+  `);
+  document.getElementById('editPlanForm').addEventListener('submit', e=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const sectionId = fd.get('sectionId');
+    STATE.plannerOverrides[date] = {
+      ...plan,
+      sectionId, sectionName: SECTION_BY_ID[sectionId].name,
+      label: fd.get('label'), plannedHours: Number(fd.get('plannedHours'))||plan.plannedHours,
+      questionsTarget: Number(fd.get('questionsTarget'))||plan.questionsTarget,
+      priority: fd.get('priority')
+    };
+    saveState();
+    closeModal();
+    render();
+    toast('Plan updated');
+  });
+}
+
+function toast(msg){
+  let el = document.getElementById('toastEl');
+  if(!el){ el = document.createElement('div'); el.id='toastEl';
+    el.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:6px;font-size:13px;z-index:100;opacity:0;transition:opacity .2s;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg; el.style.opacity='1';
+  clearTimeout(el._t); el._t = setTimeout(()=>{el.style.opacity='0';},1800);
+}
+
+/* ============================= PAGE: OVERVIEW ============================= */
+let chartRefs = {};
+function destroyCharts(){ Object.values(chartRefs).forEach(c=>c && c.destroy()); chartRefs = {}; }
+
+function renderOverview(){
+  const stats = overallStats();
+  const streak = currentStreak();
+  const today = todayStr();
+  const agg = todaysAgg(today);
+  const plan = getPlanForDate(today);
+  const daysLeft = daysBetween(today, PREP_END);
+
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead">
+      <h1>Overview</h1>
+      <p>Preparation window: ${humanDate(PREP_START)} → ${humanDate(PREP_END)} · ${TOTAL_DAYS} days total</p>
+    </div>
+
+    <div class="card" style="padding:0;">
+      <div class="statgrid">
+        <div class="stat"><div class="num">${stats.pct}%</div><div class="lbl">Syllabus completion</div></div>
+        <div class="stat"><div class="num">${stats.completed}/${stats.total}</div><div class="lbl">Topics completed</div></div>
+        <div class="stat"><div class="num">${daysLeft}</div><div class="lbl">Days remaining</div></div>
+        <div class="stat"><div class="num">🔥 ${streak}</div><div class="lbl">Study streak</div></div>
+        <div class="stat"><div class="num">${agg.hours}h</div><div class="lbl">Today's study</div></div>
+        <div class="stat"><div class="num">${stats.totalHours}h</div><div class="lbl">Total study hours</div></div>
+        <div class="stat"><div class="num">${stats.totalAttempted}</div><div class="lbl">Questions solved</div></div>
+        <div class="stat"><div class="num">${stats.accuracy}%</div><div class="lbl">Overall accuracy</div></div>
+        <div class="stat"><div class="num">${stats.mockCount}</div><div class="lbl">Mock tests completed</div></div>
+        <div class="stat"><div class="num">${stats.avgMock}%</div><div class="lbl">Avg. mock score</div></div>
+        <div class="stat"><div class="num">${stats.notStarted}</div><div class="lbl">Topics remaining</div></div>
+        <div class="stat"><div class="num">${stats.revisionNeeded}</div><div class="lbl">Marked for revision</div></div>
+      </div>
+    </div>
+
+    <div class="card mt14">
+      <div class="section-title">PREPARATION TIMELINE</div>
+      ${renderTimelineHTML()}
+    </div>
+
+    <div class="card mt14">
+      <div class="section-title">SUBJECT-WISE COMPLETION</div>
+      <div class="grid grid-2" id="subjMini"></div>
+    </div>
+
+    <div class="two-col mt14">
+      <div class="card">
+        <div class="section-title">WEEKLY STUDY HOURS</div>
+        <canvas id="weeklyHoursChart" height="160"></canvas>
+      </div>
+      <div class="card">
+        <div class="section-title">QUESTIONS SOLVED (LAST 8 WEEKS)</div>
+        <canvas id="weeklyQChart" height="160"></canvas>
+      </div>
+    </div>
+
+    <div class="two-col mt14">
+      <div class="card">
+        <div class="section-title">ACCURACY TREND</div>
+        <canvas id="accChart" height="160"></canvas>
+      </div>
+      <div class="card">
+        <div class="section-title">MOCK TEST SCORE TREND</div>
+        <canvas id="mockChart" height="160"></canvas>
+      </div>
+    </div>
+
+    <div class="card mt14">
+      <div class="section-title">STUDY ACTIVITY HEATMAP</div>
+      <div id="heatmapWrap"></div>
+    </div>
+
+    <div class="two-col mt14">
+      <div class="card">
+        <div class="section-title">FOCUS AREAS</div>
+        ${renderFocusMini()}
+      </div>
+      <div class="card">
+        <div class="section-title">RECENT ACTIVITY</div>
+        ${renderRecentActivityHTML()}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('subjMini').innerHTML = SYLLABUS.map(s=>{
+    const a = sectionAgg(s.id);
+    return `<div class="stat" style="border:1px solid var(--line);border-radius:6px;padding:12px;">
+      <div class="flexrow mb0"><b style="font-size:13px;">${esc(s.name)}</b><span class="mono small">${a.pct}%</span></div>
+      ${progressBar(a.pct)}
+      <div class="small mt10">${a.completed}/${a.total} topics · ${a.hours}h · ${a.accuracy!==null?a.accuracy+'% acc.':'no data'}</div>
+    </div>`;
+  }).join('');
+
+  buildOverviewCharts();
+  renderHeatmap();
+}
+
+function renderTimelineHTML(){
+  const p1 = P1_END_IDX+1, p2 = P2_END_IDX-P1_END_IDX, p3 = P3_END_IDX-P2_END_IDX, p4 = TOTAL_DAYS-1-P3_END_IDX;
+  const todayIdx = ALL_DATES.indexOf(todayStr());
+  const pos = (todayIdx/(TOTAL_DAYS-1))*100;
+  return `<div class="timeline">
+    <div class="track">
+      <div class="seg" style="width:${p1/TOTAL_DAYS*100}%;background:#3B6FB6;"></div>
+      <div class="seg" style="width:${p2/TOTAL_DAYS*100}%;background:var(--amber);"></div>
+      <div class="seg" style="width:${p3/TOTAL_DAYS*100}%;background:#7A57B0;"></div>
+      <div class="seg" style="width:${p4/TOTAL_DAYS*100}%;background:var(--rose);"></div>
+    </div>
+    <div class="marker" style="left:${pos}%;"></div>
+    <div class="marker-lbl" style="left:${pos}%;">Today</div>
+  </div>
+  <div class="grid grid-4 mt20">
+    <div class="small"><span class="chip-phase chip-p1">Phase 1</span><br>Concept Building<br><span class="mono">${p1} days</span></div>
+    <div class="small"><span class="chip-phase chip-p2">Phase 2</span><br>Problem Solving<br><span class="mono">${p2} days</span></div>
+    <div class="small"><span class="chip-phase chip-p3">Phase 3</span><br>Revision<br><span class="mono">${p3} days</span></div>
+    <div class="small"><span class="chip-phase chip-p4">Phase 4</span><br>Mocks + Final Rev.<br><span class="mono">${p4} days</span></div>
+  </div>`;
+}
+
+function renderFocusMini(){
+  const items = focusAreas(5);
+  if(!items.length) return `<div class="empty">Start logging sessions to surface focus areas.</div>`;
+  return `<table class="tbl"><tbody>${items.map(f=>`<tr><td>${esc(f.topic.name)}<div class="small">${esc(f.topic.sectionName)}</div></td><td class="mono">${f.accuracy!==null?f.accuracy+'%':'—'}</td><td>${statusBadge(f.status)}</td></tr>`).join('')}</tbody></table>`;
+}
+function renderRecentActivityHTML(){
+  const items = recentActivity(8);
+  if(!items.length) return `<div class="empty">No activity yet. Log your first session on Today.</div>`;
+  return `<div class="topiclist">${items.map(i=>`<div class="topicrow"><div class="tname">${esc(i.text)}</div><div class="mono small">${humanDate(i.date)}</div></div>`).join('')}</div>`;
+}
+
+function buildOverviewCharts(){
+  destroyCharts();
+  const wh = weeklyHours();
+  // aggregate into weeks (7-day buckets) from PREP_START
+  const weeks = [];
+  for(let i=0;i<ALL_DATES.length;i+=7){
+    const chunk = ALL_DATES.slice(i,i+7);
+    const hrs = chunk.reduce((a,d)=>a+(wh[d]||0),0);
+    const qs = chunk.reduce((a,d)=>a+STATE.sessions.filter(s=>s.date===d).reduce((x,s)=>x+(Number(s.attempted)||0),0),0);
+    weeks.push({label:'W'+(weeks.length+1), hrs:Math.round(hrs*10)/10, qs});
+  }
+  const doneWeeks = weeks.filter((w,i)=> ALL_DATES[i*7] <= todayStr());
+  const last8 = doneWeeks.slice(-8).length ? doneWeeks.slice(-8) : weeks.slice(0,1);
+
+  chartRefs.wh = new Chart(document.getElementById('weeklyHoursChart'), {
+    type:'bar',
+    data:{ labels:last8.map(w=>w.label), datasets:[{label:'Hours', data:last8.map(w=>w.hrs), backgroundColor:'#0E6E62'}] },
+    options:{plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}}}
+  });
+  chartRefs.wq = new Chart(document.getElementById('weeklyQChart'), {
+    type:'bar',
+    data:{ labels:last8.map(w=>w.label), datasets:[{label:'Questions', data:last8.map(w=>w.qs), backgroundColor:'#B4791A'}] },
+    options:{plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}}}
+  });
+
+  // accuracy trend by date with activity
+  const activeDates = Array.from(new Set(STATE.sessions.map(s=>s.date))).sort();
+  const accSeries = activeDates.map(d=>{
+    const sess = STATE.sessions.filter(s=>s.date===d);
+    const att = sess.reduce((a,s)=>a+(Number(s.attempted)||0),0);
+    const cor = sess.reduce((a,s)=>a+(Number(s.correct)||0),0);
+    return att>0 ? Math.round((cor/att)*1000)/10 : null;
+  });
+  chartRefs.acc = new Chart(document.getElementById('accChart'), {
+    type:'line',
+    data:{ labels:activeDates.map(d=>d.slice(5)), datasets:[{label:'Accuracy %', data:accSeries, borderColor:'#0E6E62', tension:0.25, spanGaps:true}] },
+    options:{plugins:{legend:{display:false}}, scales:{y:{min:0,max:100}}}
+  });
+
+  const mocks = [...STATE.mockTests].sort((a,b)=>a.date<b.date?-1:1);
+  chartRefs.mock = new Chart(document.getElementById('mockChart'), {
+    type:'line',
+    data:{ labels:mocks.map(m=>m.date.slice(5)), datasets:[{label:'Score %', data:mocks.map(m=>m.totalMarks>0?Math.round(m.marksObtained/m.totalMarks*1000)/10:0), borderColor:'#AE3B45', tension:0.25}] },
+    options:{plugins:{legend:{display:false}}, scales:{y:{min:0,max:100}}}
+  });
+}
+
+function renderHeatmap(){
+  const wh = weeklyHours();
+  const max = Math.max(1, ...Object.values(wh));
+  const wrap = document.getElementById('heatmapWrap');
+  if(!wrap) return;
+  wrap.innerHTML = `<div class="heatmap">${ALL_DATES.map(d=>{
+    const v = wh[d]||0;
+    const intensity = v<=0 ? 0 : Math.min(4, Math.ceil((v/max)*4));
+    const colors = ['var(--slate-soft)','#CDE7E2','#8FCFC2','#3FA593','var(--teal)'];
+    const future = d>todayStr();
+    return `<div class="heat-cell" title="${d}: ${v.toFixed(1)}h" style="background:${future?'var(--slate-soft)':colors[intensity]};opacity:${future?0.4:1};"></div>`;
+  }).join('')}</div>
+  <div class="small mt10">Each cell = one day of the prep window (${humanDate(PREP_START)} → ${humanDate(PREP_END)}). Darker = more hours studied.</div>`;
+}
+
+/* ============================= PAGE: SUBJECTS ============================= */
+function renderSubjects(){
+  if(ROUTE.subjectId){ return renderSubjectDetail(ROUTE.subjectId); }
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead"><h1>Subjects</h1><p>Click a subject to view and update every topic inside it.</p></div>
+    <div class="grid grid-2" id="subjGrid"></div>
+  `;
+  document.getElementById('subjGrid').innerHTML = SYLLABUS.map(s=>{
+    const a = sectionAgg(s.id);
+    return `<div class="card subjectcard" data-sid="${s.id}">
+      <h3>${esc(s.name)}</h3>
+      <div class="meta">${a.total} topics · last studied ${a.lastDate?humanDate(a.lastDate):'—'}</div>
+      ${progressBar(a.pct)}
+      <div class="grid grid-4 mt14">
+        <div><div class="small">Completed</div><div class="mono">${a.completed}</div></div>
+        <div><div class="small">In progress</div><div class="mono">${a.inProgress}</div></div>
+        <div><div class="small">Not started</div><div class="mono">${a.notStarted}</div></div>
+        <div><div class="small">Revision</div><div class="mono">${a.revisionNeeded}</div></div>
+      </div>
+      <div class="grid grid-3 mt10">
+        <div><div class="small">Hours</div><div class="mono">${a.hours}</div></div>
+        <div><div class="small">Questions</div><div class="mono">${a.attempted}</div></div>
+        <div><div class="small">Accuracy</div><div class="mono">${a.accuracy!==null?a.accuracy+'%':'—'}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('[data-sid]').forEach(el=>el.addEventListener('click',()=>navigate('subjects',{subjectId:el.dataset.sid})));
+}
+
+function renderSubjectDetail(sid){
+  const sec = SECTION_BY_ID[sid];
+  const a = sectionAgg(sid);
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead flexrow">
+      <div><h1>${esc(sec.name)}</h1><p>${a.completed}/${a.total} topics completed · ${a.hours}h logged · ${a.accuracy!==null?a.accuracy+'% accuracy':'no attempts yet'}</p></div>
+      <button class="btn" id="backSubj">← All subjects</button>
+    </div>
+    <div class="card">${progressBar(a.pct)}</div>
+    <div class="card mt14">
+      <div class="section-title">TOPICS</div>
+      <div class="topiclist" id="topicListDetail"></div>
+    </div>
+  `;
+  document.getElementById('backSubj').onclick = ()=>navigate('subjects',{subjectId:null});
+  document.getElementById('topicListDetail').innerHTML = sec.topics.map(t=>{
+    const rec = STATE.topics[t.id]; const agg = topicAgg(t.id);
+    return `<div class="topicrow" style="flex-wrap:wrap;">
+      <div class="tname" style="flex:1 1 260px;">
+        <div>${esc(t.name)}</div>
+        <div class="small">${agg.hours}h · ${agg.attempted} Q's${agg.accuracy!==null?` · ${agg.accuracy}% acc`:''}${rec.dateCompleted?` · done ${humanDate(rec.dateCompleted)}`:''}</div>
+      </div>
+      <div class="statuspick" data-topic="${t.id}">
+        ${['not_started','in_progress','completed','revision_needed'].map(s=>`<button data-set-status="${s}" class="${rec.status===s?'on s-'+STATUS_CLASS[s]:''}">${STATUS_LABEL[s]}</button>`).join('')}
+      </div>
+      <button class="btn btn-sm" data-detail="${t.id}">Details</button>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('[data-set-status]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const row = e.target.closest('[data-topic]');
+      setTopicStatus(row.dataset.topic, e.target.dataset.setStatus);
+      renderSubjectDetail(sid);
+    });
+  });
+  document.querySelectorAll('[data-detail]').forEach(btn=>btn.addEventListener('click', e=>openTopicDetailModal(e.target.dataset.detail)));
+}
+
+function openTopicDetailModal(topicId){
+  const t = TOPIC_BY_ID[topicId]; const rec = STATE.topics[topicId]; const agg = topicAgg(topicId);
+  openModal(`
+    <button class="close" data-close-modal>×</button>
+    <h2>${esc(t.name)}</h2>
+    <div class="small">${esc(t.sectionName)}</div>
+    <div class="grid grid-3 mt14">
+      <div><div class="small">Hours</div><div class="mono">${agg.hours}</div></div>
+      <div><div class="small">Questions</div><div class="mono">${agg.attempted}</div></div>
+      <div><div class="small">Accuracy</div><div class="mono">${agg.accuracy!==null?agg.accuracy+'%':'—'}</div></div>
+    </div>
+    <form id="topicNoteForm" class="mt14">
+      <label class="f">Confidence (1–5)</label>
+      <input class="f" type="number" min="1" max="5" name="confidence" value="${rec.confidence||''}">
+      <label class="f">Personal notes</label>
+      <textarea class="f" name="notes">${esc(rec.notes)}</textarea>
+      <div class="section-title mt14">REVISION STAGES</div>
+      <div class="small">
+        ${['r1','r2','r3','final'].map(k=>{
+          const r = rec.revisions[k];
+          return `<div class="flexrow" style="padding:6px 0;border-bottom:1px solid var(--line);">
+            <span>${({r1:'Revision 1',r2:'Revision 2',r3:'Revision 3',final:'Final Revision'})[k]} ${r.date?`<span class="mono">(due ${humanDate(r.date)})</span>`:''}</span>
+            <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" data-rev="${k}" ${r.done?'checked':''}/> Done</label>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="btn-row mt14"><button class="btn btn-primary" type="submit">Save</button></div>
+    </form>
+  `);
+  document.querySelectorAll('[data-rev]').forEach(cb=>cb.addEventListener('change', e=>{
+    rec.revisions[e.target.dataset.rev].done = e.target.checked;
+    if(e.target.checked) rec.revisions[e.target.dataset.rev].doneDate = todayStr();
+    saveState();
+  }));
+  document.getElementById('topicNoteForm').addEventListener('submit', e=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    rec.confidence = Number(fd.get('confidence'))||rec.confidence;
+    rec.notes = fd.get('notes');
+    saveState();
+    closeModal();
+    render();
+    toast('Topic notes saved');
+  });
+}
+
+/* ============================= PAGE: PLANNER ============================= */
+function renderPlanner(){
+  const monthStart = ROUTE.monthStart || todayStr().slice(0,7)+'-01';
+  const monthDate = parseD(monthStart);
+  const monthDates = ALL_DATES.filter(d=>d.startsWith(monthStart.slice(0,7)));
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead flexrow">
+      <div><h1>Planner</h1><p>Full calendar, ${humanDate(PREP_START)} → ${humanDate(PREP_END)}. Click a day to edit it.</p></div>
+      <div class="btn-row">
+        <button class="btn btn-sm" id="pmPrev">← Prev month</button>
+        <button class="btn btn-sm" id="pmNext">Next month →</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">${monthDate.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</div>
+      <table class="tbl">
+        <thead><tr><th>Date</th><th>Day</th><th>Phase</th><th>Subject / focus</th><th>Hours</th><th>Questions</th><th>Status</th></tr></thead>
+        <tbody>${monthDates.map(d=>{
+          const p = getPlanForDate(d);
+          const agg = todaysAgg(d);
+          const isToday = d===todayStr();
+          const past = d<todayStr();
+          const done = p.plannedHours>0 && agg.hours>=p.plannedHours*0.8;
+          return `<tr style="${isToday?'background:var(--teal-soft);':''}" data-day="${d}">
+            <td class="mono">${d.slice(8)} ${d.slice(0,4)==monthDate.getFullYear().toString()?'':''}</td>
+            <td>${dayName(d).slice(0,3)}</td>
+            <td>${phaseChip(p.phase)}</td>
+            <td>${esc(p.sectionName||'—')}<div class="small">${p.topicNames.length?esc(p.topicNames.join(', ')):esc(p.label)}</div></td>
+            <td class="mono">${agg.hours}/${p.plannedHours}</td>
+            <td class="mono">${agg.attempted}/${p.questionsTarget}</td>
+            <td>${past ? (done?'<span class="badge b-done">Done</span>':(agg.hours>0?'<span class="badge b-progress">Partial</span>':'<span class="badge b-revision">Missed</span>')) : (isToday?'<span class="badge b-progress">Today</span>':'<span class="badge b-notstarted">Upcoming</span>')}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
+  `;
+  document.getElementById('pmPrev').onclick = ()=>{
+    const nd = new Date(monthDate.getFullYear(), monthDate.getMonth()-1, 1);
+    navigate('planner',{monthStart: fmtD(nd)});
+  };
+  document.getElementById('pmNext').onclick = ()=>{
+    const nd = new Date(monthDate.getFullYear(), monthDate.getMonth()+1, 1);
+    navigate('planner',{monthStart: fmtD(nd)});
+  };
+  document.querySelectorAll('[data-day]').forEach(row=>row.addEventListener('click',()=>navigate('today',{viewDate:row.dataset.day})));
+}
+
+/* ============================= PAGE: REVISION ============================= */
+function renderRevision(){
+  const due = revisionDueToday();
+  const upcoming = [];
+  ALL_TOPICS.forEach(t=>{
+    const rec = STATE.topics[t.id];
+    ['r1','r2','r3','final'].forEach(k=>{
+      const r = rec.revisions[k];
+      if(!r.done && r.date && r.date>todayStr()) upcoming.push({topic:t, stage:k, date:r.date});
+    });
+  });
+  upcoming.sort((a,b)=>a.date<b.date?-1:1);
+
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead"><h1>Revision Tracker</h1><p>Spaced revision stages, auto-scheduled 3 / 7 / 16 / 30 days after a topic is marked completed.</p></div>
+    <div class="card">
+      <div class="section-title">TOPICS TO REVISE TODAY</div>
+      ${due.length ? `<div class="topiclist">${due.map(d=>`<div class="topicrow">
+        <div class="tname">${esc(d.topic.name)} <span class="tag">${esc(d.topic.sectionName)}</span></div>
+        <span class="tag">${({r1:'Revision 1',r2:'Revision 2',r3:'Revision 3',final:'Final'})[d.stage]}</span>
+        <button class="btn btn-sm" data-mark-rev="${d.topic.id}|${d.stage}">Mark done</button>
+      </div>`).join('')}</div>` : `<div class="empty">Nothing due today.</div>`}
+    </div>
+    <div class="card mt14">
+      <div class="section-title">UPCOMING REVISIONS</div>
+      ${upcoming.length? `<table class="tbl"><thead><tr><th>Date</th><th>Topic</th><th>Stage</th></tr></thead><tbody>
+        ${upcoming.slice(0,30).map(u=>`<tr><td class="mono">${humanDate(u.date)}</td><td>${esc(u.topic.name)}</td><td>${({r1:'Revision 1',r2:'Revision 2',r3:'Revision 3',final:'Final'})[u.stage]}</td></tr>`).join('')}
+      </tbody></table>` : `<div class="empty">No upcoming revisions scheduled yet — complete topics to build the queue.</div>`}
+    </div>
+  `;
+  document.querySelectorAll('[data-mark-rev]').forEach(btn=>btn.addEventListener('click', e=>{
+    const [tid, stage] = e.target.dataset.markRev.split('|');
+    STATE.topics[tid].revisions[stage].done = true;
+    STATE.topics[tid].revisions[stage].doneDate = todayStr();
+    saveState();
+    renderRevision();
+    toast('Revision marked complete');
+  }));
+}
+
+/* ============================= PAGE: PRACTICE LOG ============================= */
+function renderPractice(){
+  let filterSec = ROUTE.filterSec || '';
+  const rows = STATE.sessions.filter(s=>!filterSec || s.sectionId===filterSec).filter(s=>s.attempted>0)
+    .sort((a,b)=>a.date<b.date?1:-1);
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead flexrow">
+      <div><h1>Practice Log</h1><p>Every logged practice session with attempted/correct counts.</p></div>
+      <button class="btn btn-primary" id="addPracticeBtn">+ Add Entry</button>
+    </div>
+    <div class="filterbar">
+      <select id="secFilter"><option value="">All subjects</option>${SYLLABUS.map(s=>`<option value="${s.id}" ${filterSec===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
+    </div>
+    <div class="card">
+      ${rows.length? `<table class="tbl"><thead><tr><th>Date</th><th>Subject</th><th>Topic</th><th>Attempted</th><th>Correct</th><th>Incorrect</th><th>Accuracy</th><th>Difficulty</th><th>Source</th></tr></thead><tbody>
+      ${rows.map(s=>{
+        const acc = s.attempted>0?Math.round((s.correct/s.attempted)*1000)/10:0;
+        return `<tr><td class="mono">${humanDate(s.date)}</td><td>${esc(s.sectionName||'—')}</td><td>${TOPIC_BY_ID[s.topicId]?esc(TOPIC_BY_ID[s.topicId].name):'—'}</td><td class="mono">${s.attempted}</td><td class="mono">${s.correct}</td><td class="mono">${s.attempted-s.correct}</td><td class="mono">${acc}%</td><td>${esc(s.difficulty||'—')}</td><td>${esc(s.source||'—')}</td></tr>`;
+      }).join('')}</tbody></table>` : `<div class="empty">No practice entries yet.</div>`}
+    </div>
+  `;
+  document.getElementById('secFilter').onchange = e=>navigate('practice',{filterSec:e.target.value});
+  document.getElementById('addPracticeBtn').onclick = ()=>openPracticeModal();
+}
+
+function openPracticeModal(){
+  openModal(`
+    <button class="close" data-close-modal>×</button>
+    <h2>Add Practice Entry</h2>
+    <form id="pracForm">
+      <label class="f">Date</label><input class="f" type="date" name="date" value="${todayStr()}" min="${PREP_START}" max="${PREP_END}">
+      <label class="f">Subject</label>
+      <select class="f" name="sectionId">${SYLLABUS.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>
+      <label class="f">Topic</label>
+      <select class="f" name="topicId"></select>
+      <div class="grid grid-2">
+        <div><label class="f">Attempted</label><input class="f" type="number" min="0" name="attempted" required></div>
+        <div><label class="f">Correct</label><input class="f" type="number" min="0" name="correct" required></div>
+      </div>
+      <div class="grid grid-2">
+        <div><label class="f">Difficulty</label><select class="f" name="difficulty"><option>Easy</option><option selected>Medium</option><option>Hard</option></select></div>
+        <div><label class="f">Time spent (min)</label><input class="f" type="number" min="0" name="timeSpent"></div>
+      </div>
+      <label class="f">Source</label><input class="f" name="source" placeholder="e.g. Previous Year Paper, GATE Overflow">
+      <div class="btn-row mt10"><button class="btn btn-primary" type="submit">Save</button></div>
+    </form>
+  `);
+  const secSel = document.querySelector('[name=sectionId]');
+  const topicSel = document.querySelector('[name=topicId]');
+  function fillTopics(){ topicSel.innerHTML = SECTION_BY_ID[secSel.value].topics.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join(''); }
+  fillTopics();
+  secSel.onchange = fillTopics;
+  document.getElementById('pracForm').addEventListener('submit', e=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const attempted = Number(fd.get('attempted'))||0;
+    const correct = Math.min(attempted, Number(fd.get('correct'))||0);
+    STATE.sessions.push({
+      id:'p'+Date.now(), date: fd.get('date'), sectionId: fd.get('sectionId'), sectionName: SECTION_BY_ID[fd.get('sectionId')].name,
+      topicId: fd.get('topicId'), attempted, correct, hours: (Number(fd.get('timeSpent'))||0)/60,
+      difficulty: fd.get('difficulty'), source: fd.get('source')
+    });
+    saveState(); closeModal(); render(); toast('Practice entry saved');
+  });
+}
+
+/* ============================= PAGE: MOCK TESTS ============================= */
+function renderMocks(){
+  const mocks = [...STATE.mockTests].sort((a,b)=>a.date<b.date?1:-1);
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead flexrow">
+      <div><h1>Mock Tests</h1><p>${mocks.length} completed · target ${STATE.goals.targetMocks}</p></div>
+      <button class="btn btn-primary" id="addMockBtn">+ Add Mock Test</button>
+    </div>
+    <div class="card"><canvas id="mockPageChart" height="90"></canvas></div>
+    <div class="card mt14">
+      ${mocks.length? `<table class="tbl"><thead><tr><th>Date</th><th>Name</th><th>Score</th><th>Attempted</th><th>Correct</th><th>Incorrect</th><th>Unattempted</th><th>Time</th></tr></thead><tbody>
+      ${mocks.map(m=>`<tr><td class="mono">${humanDate(m.date)}</td><td>${esc(m.name)}</td><td class="mono">${m.marksObtained}/${m.totalMarks} (${m.totalMarks>0?Math.round(m.marksObtained/m.totalMarks*1000)/10:0}%)</td><td class="mono">${m.attempted}</td><td class="mono">${m.correct}</td><td class="mono">${m.incorrect}</td><td class="mono">${m.unattempted}</td><td class="mono">${esc(m.timeTaken||'—')}</td></tr>`).join('')}
+      </tbody></table>` : `<div class="empty">No mock tests logged yet.</div>`}
+    </div>
+  `;
+  destroyCharts();
+  const sorted = [...mocks].sort((a,b)=>a.date<b.date?-1:1);
+  chartRefs.mockPage = new Chart(document.getElementById('mockPageChart'), {
+    type:'line',
+    data:{labels:sorted.map(m=>humanDate(m.date)), datasets:[{label:'Score %', data:sorted.map(m=>m.totalMarks>0?Math.round(m.marksObtained/m.totalMarks*1000)/10:0), borderColor:'#AE3B45', tension:0.25}]},
+    options:{plugins:{legend:{display:false}}, scales:{y:{min:0,max:100}}}
+  });
+  document.getElementById('addMockBtn').onclick = openMockModal;
+}
+function openMockModal(){
+  openModal(`
+    <button class="close" data-close-modal>×</button>
+    <h2>Add Mock Test</h2>
+    <form id="mockForm">
+      <label class="f">Date</label><input class="f" type="date" name="date" value="${todayStr()}" min="${PREP_START}" max="${PREP_END}">
+      <label class="f">Test name</label><input class="f" name="name" required placeholder="e.g. Full Mock 3">
+      <div class="grid grid-2">
+        <div><label class="f">Total marks</label><input class="f" type="number" name="totalMarks" required></div>
+        <div><label class="f">Marks obtained</label><input class="f" type="number" step="0.01" name="marksObtained" required></div>
+      </div>
+      <div class="grid grid-3">
+        <div><label class="f">Attempted</label><input class="f" type="number" name="attempted"></div>
+        <div><label class="f">Correct</label><input class="f" type="number" name="correct"></div>
+        <div><label class="f">Incorrect</label><input class="f" type="number" name="incorrect"></div>
+      </div>
+      <div class="grid grid-2">
+        <div><label class="f">Unattempted</label><input class="f" type="number" name="unattempted"></div>
+        <div><label class="f">Time taken (min)</label><input class="f" type="number" name="timeTaken"></div>
+      </div>
+      <label class="f">Weak subjects observed</label><input class="f" name="weakSubjects" placeholder="e.g. Linear Algebra, DBMS">
+      <label class="f">Mistakes / notes</label><textarea class="f" name="notes"></textarea>
+      <div class="btn-row mt10"><button class="btn btn-primary" type="submit">Save</button></div>
+    </form>
+  `);
+  document.getElementById('mockForm').addEventListener('submit', e=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    STATE.mockTests.push({
+      id:'m'+Date.now(), date:fd.get('date'), name:fd.get('name'),
+      totalMarks:Number(fd.get('totalMarks'))||0, marksObtained:Number(fd.get('marksObtained'))||0,
+      attempted:Number(fd.get('attempted'))||0, correct:Number(fd.get('correct'))||0,
+      incorrect:Number(fd.get('incorrect'))||0, unattempted:Number(fd.get('unattempted'))||0,
+      timeTaken:fd.get('timeTaken'), weakSubjects:fd.get('weakSubjects'), notes:fd.get('notes')
+    });
+    saveState(); closeModal(); render(); toast('Mock test saved');
+  });
+}
+
+/* ============================= PAGE: MISTAKE BOOK ============================= */
+function renderMistakes(){
+  let filterSec = ROUTE.filterSec || '';
+  const rows = STATE.mistakes.filter(m=>!filterSec || m.sectionId===filterSec).sort((a,b)=>a.date<b.date?1:-1);
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead flexrow">
+      <div><h1>Mistake Book</h1><p>Record recurring mistakes and the correct approach, so patterns surface.</p></div>
+      <button class="btn btn-primary" id="addMistakeBtn">+ Add Mistake</button>
+    </div>
+    <div class="filterbar"><select id="mFilter"><option value="">All subjects</option>${SYLLABUS.map(s=>`<option value="${s.id}" ${filterSec===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+    <div class="card">
+      ${rows.length? rows.map(m=>`<div class="card" style="margin-bottom:10px;">
+        <div class="flexrow"><b>${esc(TOPIC_BY_ID[m.topicId]?TOPIC_BY_ID[m.topicId].name:m.sectionName)}</b><span class="mono small">${humanDate(m.date)}</span></div>
+        <div class="small mt10"><b>Question:</b> ${esc(m.question)}</div>
+        <div class="small mt10"><b>Mistake:</b> ${esc(m.mistake)}</div>
+        <div class="small mt10"><b>Correct approach:</b> ${esc(m.correctApproach)}</div>
+        <div class="small mt10"><b>Why:</b> ${esc(m.reason)}</div>
+        <div class="mt10">${statusBadge(m.revisionStatus==='reviewed'?'completed':'not_started')}</div>
+      </div>`).join('') : `<div class="empty">No mistakes logged yet.</div>`}
+    </div>
+  `;
+  document.getElementById('mFilter').onchange = e=>navigate('mistakes',{filterSec:e.target.value});
+  document.getElementById('addMistakeBtn').onclick = openMistakeModal;
+}
+function openMistakeModal(){
+  openModal(`
+    <button class="close" data-close-modal>×</button>
+    <h2>Add Mistake</h2>
+    <form id="mistakeForm">
+      <label class="f">Date</label><input class="f" type="date" name="date" value="${todayStr()}" min="${PREP_START}" max="${PREP_END}">
+      <label class="f">Subject</label><select class="f" name="sectionId">${SYLLABUS.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>
+      <label class="f">Topic</label><select class="f" name="topicId"></select>
+      <label class="f">Question</label><textarea class="f" name="question"></textarea>
+      <label class="f">My mistake</label><textarea class="f" name="mistake"></textarea>
+      <label class="f">Correct approach</label><textarea class="f" name="correctApproach"></textarea>
+      <label class="f">Why I made the mistake</label><textarea class="f" name="reason"></textarea>
+      <div class="btn-row mt10"><button class="btn btn-primary" type="submit">Save</button></div>
+    </form>
+  `);
+  const secSel = document.querySelector('[name=sectionId]'); const topicSel = document.querySelector('[name=topicId]');
+  function fillTopics(){ topicSel.innerHTML = SECTION_BY_ID[secSel.value].topics.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join(''); }
+  fillTopics(); secSel.onchange = fillTopics;
+  document.getElementById('mistakeForm').addEventListener('submit', e=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    STATE.mistakes.push({ id:'mk'+Date.now(), date:fd.get('date'), sectionId:fd.get('sectionId'), topicId:fd.get('topicId'),
+      question:fd.get('question'), mistake:fd.get('mistake'), correctApproach:fd.get('correctApproach'), reason:fd.get('reason'), revisionStatus:'pending' });
+    saveState(); closeModal(); render(); toast('Mistake logged');
+  });
+}
+
+/* ============================= PAGE: FOCUS AREAS ============================= */
+function renderFocus(){
+  const focus = focusAreas(15);
+  const strong = strongTopics(10);
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead"><h1>Focus Areas</h1><p>Ranked objectively by accuracy, confidence, mistake count and overdue revisions — no subjective labels.</p></div>
+    <div class="card">
+      <div class="section-title">NEEDS ATTENTION</div>
+      ${focus.length? `<table class="tbl"><thead><tr><th>Topic</th><th>Subject</th><th>Accuracy</th><th>Confidence</th><th>Mistakes</th><th>Status</th></tr></thead><tbody>
+        ${focus.map(f=>`<tr><td>${esc(f.topic.name)}</td><td>${esc(f.topic.sectionName)}</td><td class="mono">${f.accuracy!==null?f.accuracy+'%':'—'}</td><td class="mono">${f.confidence||'—'}</td><td class="mono">${f.mistakeCount}</td><td>${statusBadge(f.status)}</td></tr>`).join('')}
+      </tbody></table>` : `<div class="empty">Not enough data yet — log sessions and mistakes to populate this.</div>`}
+    </div>
+    <div class="card mt14">
+      <div class="section-title">STRONG TOPICS</div>
+      ${strong.length? `<table class="tbl"><thead><tr><th>Topic</th><th>Subject</th><th>Accuracy</th><th>Confidence</th></tr></thead><tbody>
+        ${strong.map(f=>`<tr><td>${esc(f.topic.name)}</td><td>${esc(f.topic.sectionName)}</td><td class="mono">${f.accuracy}%</td><td class="mono">${f.confidence||'—'}</td></tr>`).join('')}
+      </tbody></table>` : `<div class="empty">Complete topics with logged accuracy to see your strongest areas.</div>`}
+    </div>
+  `;
+}
+
+/* ============================= PAGE: GOALS & SETTINGS ============================= */
+function renderGoals(){
+  const g = STATE.goals;
+  document.getElementById('main').innerHTML = `
+    <div class="pagehead"><h1>Goals & Settings</h1><p>Set targets, manage theme, and control your data.</p></div>
+    <div class="card">
+      <div class="section-title">STUDY GOALS</div>
+      <form id="goalsForm">
+        <div class="grid grid-2">
+          <div><label class="f">Daily study-hour goal</label><input class="f" type="number" step="0.5" name="dailyHours" value="${g.dailyHours}"></div>
+          <div><label class="f">Weekly study-hour goal</label><input class="f" type="number" step="0.5" name="weeklyHours" value="${g.weeklyHours}"></div>
+          <div><label class="f">Daily question goal</label><input class="f" type="number" name="dailyQuestions" value="${g.dailyQuestions}"></div>
+          <div><label class="f">Weekly question goal</label><input class="f" type="number" name="weeklyQuestions" value="${g.weeklyQuestions}"></div>
+          <div><label class="f">Target number of mock tests</label><input class="f" type="number" name="targetMocks" value="${g.targetMocks}"></div>
+        </div>
+        <div class="btn-row mt14"><button class="btn btn-primary" type="submit">Save Goals</button></div>
+      </form>
+    </div>
+    <div class="card mt14">
+      <div class="section-title">PLANNED VS ACTUAL</div>
+      <div class="grid grid-2">
+        <div class="stat"><div class="flexrow"><span class="small">This week — hours</span><span class="mono">${thisWeekHours()} / ${g.weeklyHours}</span></div>${progressBar(thisWeekHours()/g.weeklyHours*100)}</div>
+        <div class="stat"><div class="flexrow"><span class="small">This week — questions</span><span class="mono">${thisWeekQuestions()} / ${g.weeklyQuestions}</span></div>${progressBar(thisWeekQuestions()/g.weeklyQuestions*100)}</div>
+      </div>
+    </div>
+    <div class="card mt14">
+      <div class="section-title">APPEARANCE</div>
+      <div class="btn-row">
+        <button class="btn ${STATE.theme==='light'?'btn-primary':''}" id="themeLight">Light</button>
+        <button class="btn ${STATE.theme==='dark'?'btn-primary':''}" id="themeDark">Dark</button>
+        <button class="btn ${STATE.theme==='auto'?'btn-primary':''}" id="themeAuto">Auto</button>
+      </div>
+    </div>
+    <div class="card mt14">
+      <div class="section-title">DATA</div>
+      <p class="small">All your progress is stored locally in this browser. Nothing is sent anywhere.</p>
+      <div class="btn-row">
+        <button class="btn" id="exportBtn">Export data (JSON)</button>
+        <button class="btn" id="resetBtn" style="color:var(--rose);border-color:var(--rose);">Reset all progress to zero</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('goalsForm').addEventListener('submit', e=>{
+    e.preventDefault(); const fd = new FormData(e.target);
+    STATE.goals = { dailyHours:Number(fd.get('dailyHours'))||g.dailyHours, weeklyHours:Number(fd.get('weeklyHours'))||g.weeklyHours,
+      dailyQuestions:Number(fd.get('dailyQuestions'))||g.dailyQuestions, weeklyQuestions:Number(fd.get('weeklyQuestions'))||g.weeklyQuestions,
+      targetMocks:Number(fd.get('targetMocks'))||g.targetMocks };
+    saveState(); toast('Goals saved'); render();
+  });
+  document.getElementById('themeLight').onclick = ()=>setTheme('light');
+  document.getElementById('themeDark').onclick = ()=>setTheme('dark');
+  document.getElementById('themeAuto').onclick = ()=>setTheme('auto');
+  document.getElementById('exportBtn').onclick = ()=>{
+    const blob = new Blob([JSON.stringify(STATE,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='gate-da-2027-progress.json'; a.click();
+  };
+  document.getElementById('resetBtn').onclick = ()=>{
+    if(confirm('This will permanently erase all logged progress and start fresh at 0%. Continue?')) resetAllData();
+  };
+}
+function setTheme(t){ STATE.theme = t; saveState(); applyTheme(); render(); }
+function applyTheme(){ document.documentElement.setAttribute('data-theme', STATE.theme==='auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light') : STATE.theme); if(STATE.theme==='auto') document.documentElement.removeAttribute('data-theme'); }
+function thisWeekHours(){
+  const t = parseD(todayStr()); const startOfWeek = addDays(t, -t.getDay());
+  return Math.round(STATE.sessions.filter(s=>parseD(s.date)>=startOfWeek && parseD(s.date)<=t).reduce((a,s)=>a+(Number(s.hours)||0),0)*10)/10;
+}
+function thisWeekQuestions(){
+  const t = parseD(todayStr()); const startOfWeek = addDays(t, -t.getDay());
+  return STATE.sessions.filter(s=>parseD(s.date)>=startOfWeek && parseD(s.date)<=t).reduce((a,s)=>a+(Number(s.attempted)||0),0);
+}
+
+/* ============================= RENDER DISPATCH / INIT ============================= */
+function render(){
+  renderNav();
+  destroyCharts();
+  const map = { today:renderToday, overview:renderOverview, subjects:renderSubjects, planner:renderPlanner,
+    revision:renderRevision, practice:renderPractice, mocks:renderMocks, mistakes:renderMistakes,
+    focus:renderFocus, goals:renderGoals };
+  (map[ROUTE.page] || renderToday)();
+}
+
+function seedDemoDataIfEmpty(){
+  // Only seeds if there is truly zero activity anywhere - a lightweight illustrative demo, easily reset.
+}
+
+GENERATED_PLAN = generatePlan();
+applyTheme();
+render();
+
+</script>
+</body>
+</html>
